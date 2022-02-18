@@ -1,7 +1,25 @@
-from pydoc import classname
 import tkinter
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, 
+NavigationToolbar2Tk)
 
-
+def plot():
+  
+    fig = Figure(figsize = (5, 5), dpi = 100)
+  
+  
+    plot1 = fig.add_subplot(111)
+  
+  
+    canvas = FigureCanvasTkAgg(fig, master = window)  
+    canvas.draw()
+  
+    canvas.get_tk_widget().pack()
+  
+    toolbar = NavigationToolbar2Tk(canvas, window)
+    toolbar.update()
+  
+    canvas.get_tk_widget().pack()
 
 if __name__ == '__main__':
     window = tkinter.Tk()
@@ -10,6 +28,7 @@ if __name__ == '__main__':
 
     
 
-    button1 = tkinter.Button(window, text="Click me", command=lambda: print("Button1"), width=10, height=1).grid(padx=50, pady=20, row=1, column=1)
-    button1 = tkinter.Button(window, text="Click me", command=lambda: print("Button1")).grid(padx=50, pady=20, row=1, column=2)
-    window.mainloop()
+    button1 = tkinter.Button(window, text="Click me", width=10, height=1, command = plot)
+    
+    button1.pack()
+    window.mainloop()  
