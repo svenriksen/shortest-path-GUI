@@ -39,14 +39,20 @@ def draw_line_left(event):
     polygon = Polygon(coordinates)
 
     if polygon.contains(tmppoint):
+
         if not is_leftclicked:
             
             leftclicked_id = canvas.create_oval(x1,y1,x2,y2,fill="red", outline="")
             is_leftclicked = True
+
+            for i in range(len(coordinates)-1):
+                canvas.create_line(x1,y1,coordinates[i][0],coordinates[i][1],fill="red")
             
         else:
             canvas.delete(leftclicked_id)
             leftclicked_id = canvas.create_oval(x1,y1,x2,y2,fill="red", outline="")
+            for i in range(len(coordinates)-1):
+                canvas.create_line(x1,y1,coordinates[i][0],coordinates[i][1],fill="red")
     
 
 
