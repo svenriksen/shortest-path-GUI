@@ -1,18 +1,21 @@
 from operator import contains
 from re import X
 import tkinter
+from turtle import distance
 from shapely.geometry import Point, LineString
 from shapely.geometry.polygon import Polygon
 import math
+from queue import PriorityQueue
+
 
 is_rightclicked = False
 is_leftclicked = False
 graph = {}
 
+drawarray = []
+
 n = 0
 m = 0
-startpoint = 0
-endpoint = 0
 
 def create_graph():
     global coordinates
@@ -40,16 +43,18 @@ def create_graph():
                     if (main_polygon.contains(point) or abs(j-i)==1):
                         tmp1 = [j, math.sqrt((coordinates[i][0]-coordinates[j][0])**2 + (coordinates[i][1]-coordinates[j][1])**2)]
                         graph[i].append(tmp1)
-                        canvas.create_line(coordinates[i][0], coordinates[i][1], coordinates[j][0], coordinates[j][1], fill="green", width=1)
+                        #canvas.create_line(coordinates[i][0], coordinates[i][1], coordinates[j][0], coordinates[j][1], fill="green", width=1)
 
 def draw_line_right(event):
-    global startpoint
     global is_rightclicked
     global rightclicked_id
 
     global right_point
     global n
     global m
+
+    for i in range(len(drawarray)):
+        canvas.delete(drawarray[i])
 
     x1=event.x-5
     y1=event.y-5
@@ -63,40 +68,22 @@ def draw_line_right(event):
     if polygon.contains(tmppoint):
         
         if not is_rightclicked:
-            n=n+1
-            startpoint = n-1
             rightclicked_id = canvas.create_oval(x1,y1,x2,y2,fill="green", outline="")
-            is_rightclicked = True
-
-            for i in range(len(coordinates)-1):
-                path = LineString([coordinates[i], tmppoint])
-                if not path.crosses(polygon):
-                    tmp1 = [n-1, math.sqrt((coordinates[i][0]-tmppoint.x)**2 + (coordinates[i][1]-tmppoint.y)**2)]
-                    graph[n-1].append(tmp1)
-                    m=m+1
-
-
+            is_rightclicked = True          
         else:
             canvas.delete(rightclicked_id)
-            rightclicked_id = canvas.create_oval(x1,y1,x2,y2,fill="green", outline="")
-            for i in range(len(coordinates)-1):
-                
-                path = LineString([coordinates[i], tmppoint])
-
-                if not path.crosses(polygon):
-                    tmp1 = [n-1, math.sqrt((coordinates[i][0]-tmppoint.x)**2 + (coordinates[i][1]-tmppoint.y)**2)]
-                    graph[n-1].append(tmp1)  
-                    m=m+1            
-    
+            rightclicked_id = canvas.create_oval(x1,y1,x2,y2,fill="green", outline="") 
 
 def draw_line_left(event):
-    global ebdpoint
     global is_leftclicked
     global leftclicked_id
     
     global left_point
     global n
     global m
+
+    for i in range(len(drawarray)):
+        canvas.delete(drawarray[i])
 
     x1=event.x-5
     y1=event.y-5
@@ -112,34 +99,93 @@ def draw_line_left(event):
 
         if not is_leftclicked:
             
-            n=n+1
+            
             leftclicked_id = canvas.create_oval(x1,y1,x2,y2,fill="red", outline="")
             is_leftclicked = True
 
-            for i in range(len(coordinates)-1):
-                path = LineString([coordinates[i], tmppoint])
-                if not path.crosses(polygon):
-                    tmp1 = [101, math.sqrt((coordinates[i][0]-tmppoint.x)**2 + (coordinates[i][1]-tmppoint.y)**2)]
-                    graph[101].append(tmp1)
-                    m=m+1
+            
             
         else:
             canvas.delete(leftclicked_id)
             leftclicked_id = canvas.create_oval(x1,y1,x2,y2,fill="red", outline="")
-            for i in range(len(coordinates)-1):
-                path = LineString([coordinates[i], tmppoint])
-
-                if not path.crosses(polygon):
-                    tmp1 = [101, math.sqrt((coordinates[i][0]-tmppoint.x)**2 + (coordinates[i][1]-tmppoint.y)**2)]
-                    graph[101].append(tmp1)
-                    m=m+1
-
-    
+            
 def dijkstra():
+    global n
+    global m
+    global drawarray
     if (is_leftclicked == True and is_rightclicked == True):
         print(right_point)
         print(left_point)
         print("Dijkstra")
+        create_graph()
+        
+        graph[n] = []
+        n=n+1
+        graph[n] = []
+        n=n+1
+        
+        polygon = Polygon(coordinates)
+        for i in range(len(coordinates)-1):
+            path = LineString([coordinates[i], right_point])
+            if not path.crosses(polygon):
+                tmp1 = [i, math.sqrt((coordinates[i][0]-right_point.x)**2 + (coordinates[i][1]-right_point.y)**2)]
+                graph[n-2].append(tmp1)
+
+                tmp2 = [n-2, math.sqrt((coordinates[i][0]-right_point.x)**2 + (coordinates[i][1]-right_point.y)**2)]
+                graph[i].append(tmp2)
+                #canvas.create_line(coordinates[i][0], coordinates[i][1], right_point.x, right_point.y, fill="blue", width=1)
+
+        for i in range(len(coordinates)-1):
+            path = LineString([coordinates[i], left_point])
+            if not path.crosses(polygon):
+                tmp1 = [i, math.sqrt((coordinates[i][0]-left_point.x)**2 + (coordinates[i][1]-left_point.y)**2)]
+                graph[n-1].append(tmp1)
+
+                tmp2 = [n-1, math.sqrt((coordinates[i][0]-left_point.x)**2 + (coordinates[i][1]-left_point.y)**2)]
+                graph[i].append(tmp2)
+                #canvas.create_line(coordinates[i][0], coordinates[i][1], left_point.x, left_point.y, fill="yellow", width=1)
+
+        path = LineString([right_point, left_point])
+        if not path.crosses(polygon):
+            tmp1 = [n-1, math.sqrt((right_point.x-left_point.x)**2 + (right_point.y-left_point.y)**2)]
+            graph[n-2].append(tmp1)
+
+            tmp2 = [n-2, math.sqrt((right_point.x-left_point.x)**2 + (right_point.y-left_point.y)**2)]
+            graph[n-1].append(tmp2)
+            #canvas.create_line(right_point.x, right_point.y, left_point.x, left_point.y, fill="purple", width=1)
+        print(graph[0][1])
+        start = n-2
+        end = n-1
+        visited = []
+        distance = []
+        par = []
+        for i in range(n):
+            visited.append(False)
+            distance.append(float('inf'))
+            par.append(None)
+        distance[start] = 0
+        pq = PriorityQueue()
+        pq.put((0, start))
+        while not pq.empty():
+            (d, v) = pq.get()
+            visited[v] = True
+            for i in range(len(graph[v])):
+                if not visited[graph[v][i][0]] and distance[v] + graph[v][i][1] < distance[graph[v][i][0]]:
+                    distance[graph[v][i][0]] = distance[v] + graph[v][i][1]
+                    par[graph[v][i][0]] = v
+                    pq.put((distance[graph[v][i][0]], graph[v][i][0]))
+        print(distance[end])
+        print(par)
+        coordinates.append((right_point.x, right_point.y))
+        coordinates.append((left_point.x, left_point.y))
+        while par[end] != None:
+            print(par[end])
+            tmp = canvas.create_line(coordinates[par[end]][0], coordinates[par[end]][1], coordinates[end][0], coordinates[end][1], fill="purple", width=5)
+            drawarray.append(tmp)
+            end = par[end]
+        coordinates.pop()
+        coordinates.pop()
+
 
 if __name__ == '__main__':
     window = tkinter.Tk()
