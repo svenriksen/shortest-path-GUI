@@ -1,18 +1,24 @@
-from operator import contains
-from re import X
 import tkinter
-from turtle import distance
 from shapely.geometry import Point, LineString
 from shapely.geometry.polygon import Polygon
 import math
 from queue import PriorityQueue
+import time
 
+from timeit import default_timer as timer
+from datetime import timedelta
 
+left_point = None
+right_point = None
 is_rightclicked = False
 is_leftclicked = False
 graph = {}
 
 drawarray = []
+draw_graph_array = []
+draw_graph_bool = False
+
+vertex = None
 
 n = 0
 m = 0
@@ -43,7 +49,36 @@ def create_graph():
                     if (main_polygon.contains(point) or abs(j-i)==1):
                         tmp1 = [j, math.sqrt((coordinates[i][0]-coordinates[j][0])**2 + (coordinates[i][1]-coordinates[j][1])**2)]
                         graph[i].append(tmp1)
-                        #canvas.create_line(coordinates[i][0], coordinates[i][1], coordinates[j][0], coordinates[j][1], fill="green", width=1)
+
+def draw_graph():
+    global vertex
+    global graph
+    global coordinates
+    global n
+    global m
+    global draw_graph_array
+    global draw_graph_bool
+    if not draw_graph_bool:
+        vertex['text'] = "Turn off graph drawing"
+        draw_graph_bool = True
+        main_polygon = Polygon(coordinates)
+        for i in range(len(graph)):
+            for j in range(len(graph[i])):
+                if (i!=j):
+                    
+                    path = LineString([coordinates[i], coordinates[j]])
+                    point = path.interpolate(0.5)
+
+                    if not path.crosses(main_polygon):
+                        if (main_polygon.contains(point) or abs(j-i)==1):
+                            tmp =canvas.create_line(coordinates[i][0], coordinates[i][1], coordinates[j][0], coordinates[j][1], fill="green", width=1)
+                            draw_graph_array.append(tmp)
+    else:
+        vertex['text'] = "Turn on graph drawing"
+        for i in range(len(draw_graph_array)):
+            canvas.delete(draw_graph_array[i])
+        draw_graph_array = []
+        draw_graph_bool = False
 
 def draw_line_right(event):
     global is_rightclicked
@@ -53,8 +88,11 @@ def draw_line_right(event):
     global n
     global m
 
+    global drawarray
+
     for i in range(len(drawarray)):
         canvas.delete(drawarray[i])
+    drawarray = []
 
     x1=event.x-5
     y1=event.y-5
@@ -63,10 +101,10 @@ def draw_line_right(event):
     x = event.x
     y = event.y
     tmppoint = Point(x, y)
-    right_point = tmppoint
+    
     polygon = Polygon(coordinates)
     if polygon.contains(tmppoint):
-        
+        right_point = tmppoint
         if not is_rightclicked:
             rightclicked_id = canvas.create_oval(x1,y1,x2,y2,fill="green", outline="")
             is_rightclicked = True          
@@ -82,8 +120,11 @@ def draw_line_left(event):
     global n
     global m
 
+    global drawarray
+
     for i in range(len(drawarray)):
         canvas.delete(drawarray[i])
+    drawarray = []
 
     x1=event.x-5
     y1=event.y-5
@@ -92,11 +133,11 @@ def draw_line_left(event):
     x = event.x
     y = event.y
     tmppoint = Point(x, y)
-    left_point = tmppoint
+    
     polygon = Polygon(coordinates)
     
     if polygon.contains(tmppoint):
-
+        left_point = tmppoint
         if not is_leftclicked:
             
             
@@ -113,6 +154,8 @@ def dijkstra():
     global n
     global m
     global drawarray
+
+    starttime = time.process_time()
     if (is_leftclicked == True and is_rightclicked == True):
         print(right_point)
         print(left_point)
@@ -143,7 +186,7 @@ def dijkstra():
 
                 tmp2 = [n-1, math.sqrt((coordinates[i][0]-left_point.x)**2 + (coordinates[i][1]-left_point.y)**2)]
                 graph[i].append(tmp2)
-                #canvas.create_line(coordinates[i][0], coordinates[i][1], left_point.x, left_point.y, fill="yellow", width=1)
+                #canvas.create_line(coordinates[i][0], coordinates[i][1], left_point.x, left_point.y, fill="red", width=1)
 
         path = LineString([right_point, left_point])
         if not path.crosses(polygon):
@@ -153,7 +196,7 @@ def dijkstra():
             tmp2 = [n-2, math.sqrt((right_point.x-left_point.x)**2 + (right_point.y-left_point.y)**2)]
             graph[n-1].append(tmp2)
             #canvas.create_line(right_point.x, right_point.y, left_point.x, left_point.y, fill="purple", width=1)
-        print(graph[0][1])
+        
         start = n-2
         end = n-1
         visited = []
@@ -175,28 +218,39 @@ def dijkstra():
                     par[graph[v][i][0]] = v
                     pq.put((distance[graph[v][i][0]], graph[v][i][0]))
         print(distance[end])
+        print(distance)
         print(par)
         coordinates.append((right_point.x, right_point.y))
         coordinates.append((left_point.x, left_point.y))
         while par[end] != None:
-            print(par[end])
+            
             tmp = canvas.create_line(coordinates[par[end]][0], coordinates[par[end]][1], coordinates[end][0], coordinates[end][1], fill="purple", width=5)
+            print(end, " ", par[end], " ", coordinates[end], " ", coordinates[par[end]])
             drawarray.append(tmp)
             end = par[end]
         coordinates.pop()
         coordinates.pop()
+    #timetext['text'] = "Time Executed: " + str(time.process_time()-starttime) + " seconds"
 
 
 if __name__ == '__main__':
+    
     window = tkinter.Tk()
     window.title("Shortest path GUI")
     window.geometry("1500x800")
 
-    btn_dijkstra = tkinter.Button(window, text="Dijkstra", command=dijkstra)
-    btn_dijkstra.pack()
+    btn_dijkstra = tkinter.Button(window, text="Find the shortest path", command=dijkstra)
+    btn_dijkstra.place(rely=0.05, relx=0.3, anchor="center")
+
+    
+    vertex = tkinter.Button(window, text="Turn on graph drawing", command=draw_graph)
+    vertex.place(rely=0.05, relx=0.7, anchor="center")
 
     canvas = tkinter.Canvas(window, width=1500, height=700)
-    canvas.pack()
+    canvas.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)
+    
+    timetext = tkinter.Label(window, text="Time Executed: ")
+    timetext.place(relx=0.5, rely=0.1, anchor=tkinter.CENTER)
 
     coordinates = []
 
@@ -217,9 +271,9 @@ if __name__ == '__main__':
 
     create_graph()
 
-    
-
-
     canvas.bind('<Button-1>', draw_line_left)
     canvas.bind('<Button-3>', draw_line_right)
+
+    #display timer dijkstra in the window
+    
     window.mainloop() 
