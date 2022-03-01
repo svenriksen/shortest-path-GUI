@@ -5,13 +5,13 @@ import math
 from queue import PriorityQueue
 import time
 
-from timeit import default_timer as timer
-from datetime import timedelta
 
 left_point = None
 right_point = None
+
 is_rightclicked = False
 is_leftclicked = False
+
 graph = {}
 
 drawarray = []
@@ -19,9 +19,103 @@ draw_graph_array = []
 draw_graph_bool = False
 
 vertex = None
+maparray = []
 
 n = 0
 m = 0
+
+def map1():
+    global maparray
+    for i in range(len(maparray)):
+        canvas.delete(maparray[i])
+    global coordinates
+    
+    global is_leftclicked
+    global is_rightclicked
+    global leftclicked_id
+    global rightclicked_id
+
+    global left_point
+    global right_point
+
+    global drawarray
+
+    
+    
+    if (is_leftclicked==True):
+        canvas.delete(leftclicked_id)
+    if (is_rightclicked==True):
+        canvas.delete(rightclicked_id)
+    is_leftclicked = False
+    is_rightclicked = False
+    left_point = None
+    right_point = None
+
+    for i in range(len(drawarray)):
+        canvas.delete(drawarray[i])
+    drawarray = []
+
+    coordinates = []
+    maparray = []
+    global line
+
+    with open("points.txt") as file:
+        line = file.read().splitlines()
+
+    for i in range(len(line)-1):
+        a = line[i].split(" ")
+        b = line[i+1].split(" ")
+        coordinates.append((int(a[0]), int(a[1])))
+        tmp = canvas.create_line(int(a[0]), int(a[1]), int(b[0]), int(b[1]), fill="black", width=5)
+        maparray.append(tmp)
+    coordinates.append((int(line[0].split(" ")[0]), int(line[0].split(" ")[1])))
+
+def map2():
+    global maparray
+    for i in range(len(maparray)):
+        canvas.delete(maparray[i])
+    global coordinates
+    
+    global is_leftclicked
+    global is_rightclicked
+    global leftclicked_id
+    global rightclicked_id
+
+    global left_point
+    global right_point
+
+    global drawarray
+
+    if (is_leftclicked==True):
+        canvas.delete(leftclicked_id)
+    if (is_rightclicked==True):
+        canvas.delete(rightclicked_id)
+    is_leftclicked = False
+    is_rightclicked = False
+    left_point = None
+    right_point = None
+
+    for i in range(len(drawarray)):
+        canvas.delete(drawarray[i])
+    drawarray = []
+
+    coordinates = []
+    maparray = []
+
+    
+
+    global line
+
+    with open("points2.txt") as file:
+        line = file.read().splitlines()
+
+    for i in range(len(line)-1):
+        a = line[i].split(" ")
+        b = line[i+1].split(" ")
+        coordinates.append((int(a[0]), int(a[1])))
+        tmp = canvas.create_line(int(a[0]), int(a[1]), int(b[0]), int(b[1]), fill="black", width=5)
+        maparray.append(tmp)
+    coordinates.append((int(line[0].split(" ")[0]), int(line[0].split(" ")[1])))
 
 def create_graph():
     global coordinates
@@ -58,12 +152,13 @@ def draw_graph():
     global m
     global draw_graph_array
     global draw_graph_bool
+
     if not draw_graph_bool:
         vertex['text'] = "Turn off graph drawing"
         draw_graph_bool = True
         main_polygon = Polygon(coordinates)
-        for i in range(len(graph)):
-            for j in range(len(graph[i])):
+        for i in range(len(coordinates)):
+            for j in range(len(coordinates)):
                 if (i!=j):
                     
                     path = LineString([coordinates[i], coordinates[j]])
@@ -155,7 +250,7 @@ def dijkstra():
     global m
     global drawarray
 
-    starttime = time.process_time()
+    start_time = time.time()
     if (is_leftclicked == True and is_rightclicked == True):
         print(right_point)
         print(left_point)
@@ -218,8 +313,7 @@ def dijkstra():
                     par[graph[v][i][0]] = v
                     pq.put((distance[graph[v][i][0]], graph[v][i][0]))
         print(distance[end])
-        print(distance)
-        print(par)
+        distancetoend = distance[end]
         coordinates.append((right_point.x, right_point.y))
         coordinates.append((left_point.x, left_point.y))
         while par[end] != None:
@@ -230,32 +324,41 @@ def dijkstra():
             end = par[end]
         coordinates.pop()
         coordinates.pop()
-    #timetext['text'] = "Time Executed: " + str(time.process_time()-starttime) + " seconds"
-
+    elapsed_time = time.time() - start_time
+    timetext['text'] = "Time Executed: " + "{:.2f}".format(elapsed_time) + " seconds"
+    print(distance[end])
+    distancetext['text'] = "Distance: " + "{:.2f}".format(distancetoend)
 
 if __name__ == '__main__':
     
     window = tkinter.Tk()
     window.title("Shortest path GUI")
     window.geometry("1500x800")
-
-    btn_dijkstra = tkinter.Button(window, text="Find the shortest path", command=dijkstra)
+    window['bg'] = 'white'
+    btn_dijkstra = tkinter.Button(window, text="Find the shortest path", command=dijkstra, fg = 'black', bg = 'yellow')
     btn_dijkstra.place(rely=0.05, relx=0.3, anchor="center")
-
     
-    vertex = tkinter.Button(window, text="Turn on graph drawing", command=draw_graph)
-    vertex.place(rely=0.05, relx=0.7, anchor="center")
+    vertex = tkinter.Button(window, text="Turn on graph drawing", command=draw_graph, fg = 'black', bg = 'yellow')
+    vertex.place(rely=0.05, relx=0.4, anchor="center")
 
-    canvas = tkinter.Canvas(window, width=1500, height=700)
-    canvas.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)
+    map1 = tkinter.Button(window, text="Map 1", command=map1, fg = 'black', bg = 'yellow')
+    map1.place(rely=0.05, relx=0.5, anchor="center")
+
+    map2 = tkinter.Button(window, text="Map 2", command=map2, fg = 'black', bg = 'yellow')
+    map2.place(rely=0.05, relx=0.6, anchor="center")
+
+    canvas = tkinter.Canvas(window, width=1500, height=700, bg="white")
+    canvas.place(relx=0.5, rely=0.6, anchor=tkinter.CENTER)
     
     timetext = tkinter.Label(window, text="Time Executed: ")
-    timetext.place(relx=0.5, rely=0.1, anchor=tkinter.CENTER)
+    timetext.place(relx=0.4, rely=0.1, anchor=tkinter.CENTER)
+
+    distancetext = tkinter.Label(window, text="Distance: ")
+    distancetext.place(relx = 0.6, rely=0.1, anchor=tkinter.CENTER)
 
     coordinates = []
 
     global line
-
     with open("points.txt") as file:
         line = file.read().splitlines()
 
@@ -263,9 +366,11 @@ if __name__ == '__main__':
         a = line[i].split(" ")
         b = line[i+1].split(" ")
         coordinates.append((int(a[0]), int(a[1])))
-        canvas.create_line(int(a[0]), int(a[1]), int(b[0]), int(b[1]), fill="black", width=5)
+        tmp = canvas.create_line(int(a[0]), int(a[1]), int(b[0]), int(b[1]), fill="black", width=5)
+        maparray.append(tmp)
     coordinates.append((int(line[0].split(" ")[0]), int(line[0].split(" ")[1])))
-    coordinates_shapely = []
+
+    
     #new thing here
 
 
